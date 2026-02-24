@@ -1,131 +1,155 @@
-// Hacker News Top 8 Widget - Echt Full Width Cards
+// Hacker News Top 8 Widget - Full Width Cards
 
-const widget = new ListWidget()
+// ─── Config ──────────────────────────────────────────────────────────────────
 
-// Dark glassmorphic background
-const gradient = new LinearGradient()
-gradient.locations = [0, 1]
-gradient.colors = [
-  new Color("#1c1c2e", 0.95),
-  new Color("#2a2a3e", 0.95)
-]
-widget.backgroundGradient = gradient
-widget.setPadding(12, 12, 12, 12)
+const CONFIG = {
+  storyCount: 8,
+  api: {
+    topStories: "https://hacker-news.firebaseio.com/v0/topstories.json",
+    item: (id) => `https://hacker-news.firebaseio.com/v0/item/${id}.json`,
+    comments: (id) => `https://news.ycombinator.com/item?id=${id}`,
+  },
+  colors: {
+    backgroundTop: new Color("#1c1c2e", 0.95),
+    backgroundBottom: new Color("#2a2a3e", 0.95),
+    badgeBackground: new Color("#ff6600", 0.25),
+    accent: new Color("#ff9955"),
+    separator: new Color("#666688"),
+    meta: new Color("#aaaacc"),
+    divider: new Color("#ffffff", 0.1),
+  },
+}
 
-try {
-  // Fetch top story IDs
-  const topStoriesUrl = "https://hacker-news.firebaseio.com/v0/topstories.json"
-  const topStoriesReq = new Request(topStoriesUrl)
-  const topStoryIds = await topStoriesReq.loadJSON()
+// ─── Data fetching ────────────────────────────────────────────────────────────
 
-  // Fetch details for top 8 stories
-  const storyPromises = []
-  for (let i = 0; i < 8; i++) {
-    const storyUrl = `https://hacker-news.firebaseio.com/v0/item/${topStoryIds[i]}.json`
-    const storyReq = new Request(storyUrl)
-    storyPromises.push(storyReq.loadJSON())
+async function fetchTopStories() {
+  const req = new Request(CONFIG.api.topStories)
+  const ids = await req.loadJSON()
+  const topIds = ids.slice(0, CONFIG.storyCount)
+
+  const stories = await Promise.all(
+    topIds.map((id) => new Request(CONFIG.api.item(id)).loadJSON())
+  )
+  return stories.filter((s) => s && s.title)
+}
+
+// ─── Widget builders ──────────────────────────────────────────────────────────
+
+function buildWidget() {
+  const widget = new ListWidget()
+
+  const gradient = new LinearGradient()
+  gradient.locations = [0, 1]
+  gradient.colors = [CONFIG.colors.backgroundTop, CONFIG.colors.backgroundBottom]
+  widget.backgroundGradient = gradient
+  widget.setPadding(12, 12, 12, 12)
+
+  return widget
+}
+
+function addNumberBadge(parent, number) {
+  const badge = parent.addStack()
+  badge.size = new Size(24, 24)
+  badge.cornerRadius = 6
+  badge.backgroundColor = CONFIG.colors.badgeBackground
+  badge.centerAlignContent()
+
+  const text = badge.addText(`${number}`)
+  text.font = Font.boldSystemFont(11)
+  text.textColor = CONFIG.colors.accent
+  text.centerAlignText()
+}
+
+function addMetaRow(parent, story) {
+  const meta = parent.addStack()
+  meta.layoutHorizontally()
+  meta.spacing = 6
+
+  function addLabel(text, color) {
+    const t = meta.addText(text)
+    t.font = Font.systemFont(8)
+    t.textColor = color
   }
 
-  const stories = await Promise.all(storyPromises)
+  function addSeparator() {
+    addLabel("•", CONFIG.colors.separator)
+  }
 
-  // Display stories - GEEN individuele card backgrounds meer
-  for (let index = 0; index < stories.length; index++) {
-    const story = stories[index]
-    if (!story || !story.title) continue
+  if (story.score) {
+    addLabel(`${story.score} points`, CONFIG.colors.accent)
+    addSeparator()
+  }
 
-    // Story row - geen background, geen padding, geen margins
-    const rowStack = widget.addStack()
-    rowStack.layoutHorizontally()
-    rowStack.centerAlignContent()
-    rowStack.setPadding(6, 0, 6, 0)
+  if (story.descendants) {
+    addLabel(`${story.descendants} comments`, CONFIG.colors.meta)
+    addSeparator()
+  }
 
-    // Make row tappable
-    const storyUrl = story.url || `https://news.ycombinator.com/item?id=${story.id}`
-    rowStack.url = storyUrl
+  if (story.time) {
+    const hoursAgo = Math.floor((Date.now() / 1000 - story.time) / 3600)
+    addLabel(`${hoursAgo}h ago`, CONFIG.colors.meta)
+  }
+}
 
-    // Number badge
-    const badgeStack = rowStack.addStack()
-    badgeStack.size = new Size(24, 24)
-    badgeStack.cornerRadius = 6
-    badgeStack.backgroundColor = new Color("#ff6600", 0.25)
-    badgeStack.centerAlignContent()
+function addStoryRow(widget, story, index) {
+  const row = widget.addStack()
+  row.layoutHorizontally()
+  row.centerAlignContent()
+  row.setPadding(6, 0, 6, 0)
+  row.url = story.url || CONFIG.api.comments(story.id)
 
-    const numberText = badgeStack.addText(`${index + 1}`)
-    numberText.font = Font.boldSystemFont(11)
-    numberText.textColor = new Color("#ff9955")
-    numberText.centerAlignText()
+  addNumberBadge(row, index + 1)
+  row.addSpacer(10)
 
-    rowStack.addSpacer(10)
+  const content = row.addStack()
+  content.layoutVertically()
 
-    // Content stack
-    const contentStack = rowStack.addStack()
-    contentStack.layoutVertically()
+  const title = content.addText(story.title)
+  title.font = Font.semiboldSystemFont(10)
+  title.textColor = Color.white()
+  title.lineLimit = 1
 
-    // Title
-    const titleText = contentStack.addText(story.title)
-    titleText.font = Font.semiboldSystemFont(10)
-    titleText.textColor = Color.white()
-    titleText.lineLimit = 1
+  content.addSpacer(3)
+  addMetaRow(content, story)
+}
 
-    contentStack.addSpacer(3)
+function addDivider(widget) {
+  widget.addSpacer(6)
+  const line = widget.addStack()
+  line.size = new Size(0, 1)
+  line.backgroundColor = CONFIG.colors.divider
+  widget.addSpacer(6)
+}
 
-    // Metadata row
-    const metaStack = contentStack.addStack()
-    metaStack.layoutHorizontally()
-    metaStack.spacing = 6
+function addErrorMessage(widget, error) {
+  const text = widget.addText(`Error: ${error.message}`)
+  text.font = Font.systemFont(10)
+  text.textColor = Color.white()
+}
 
-    // Points
-    if (story.score) {
-      const pointsText = metaStack.addText(`${story.score} points`)
-      pointsText.font = Font.systemFont(8)
-      pointsText.textColor = new Color("#ff9955")
-    }
-
-    // Separator
-    const sep1 = metaStack.addText("•")
-    sep1.font = Font.systemFont(8)
-    sep1.textColor = new Color("#666688")
-
-    // Comments
-    if (story.descendants) {
-      const commentsText = metaStack.addText(`${story.descendants} comments`)
-      commentsText.font = Font.systemFont(8)
-      commentsText.textColor = new Color("#aaaacc")
-    }
-
-    // Separator
-    const sep2 = metaStack.addText("•")
-    sep2.font = Font.systemFont(8)
-    sep2.textColor = new Color("#666688")
-
-    // Time
-    if (story.time) {
-      const hoursAgo = Math.floor((Date.now() / 1000 - story.time) / 3600)
-      const timeText = metaStack.addText(`${hoursAgo}h ago`)
-      timeText.font = Font.systemFont(8)
-      timeText.textColor = new Color("#aaaacc")
-    }
-
-    // Separator line between stories
+function populateWidget(widget, stories) {
+  stories.forEach((story, index) => {
+    addStoryRow(widget, story, index)
     if (index < stories.length - 1) {
-      widget.addSpacer(6)
-      const separatorStack = widget.addStack()
-      separatorStack.size = new Size(0, 1)
-      separatorStack.backgroundColor = new Color("#ffffff", 0.1)
-      widget.addSpacer(6)
+      addDivider(widget)
     } else {
       widget.addSpacer(6)
     }
-  }
-
-} catch (e) {
-  console.error(e)
-  const errorText = widget.addText(`Error: ${e.message}`)
-  errorText.font = Font.systemFont(10)
-  errorText.textColor = Color.white()
+  })
 }
 
-// Show widget
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+const widget = buildWidget()
+
+try {
+  const stories = await fetchTopStories()
+  populateWidget(widget, stories)
+} catch (e) {
+  console.error(e)
+  addErrorMessage(widget, e)
+}
+
 if (config.runsInWidget) {
   Script.setWidget(widget)
 } else {
