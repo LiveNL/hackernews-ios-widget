@@ -42,14 +42,14 @@ function buildWidget() {
   gradient.locations = [0, 1]
   gradient.colors = [CONFIG.colors.backgroundTop, CONFIG.colors.backgroundBottom]
   widget.backgroundGradient = gradient
-  widget.setPadding(12, 12, 12, 12)
+  widget.setPadding(10, 12, 10, 12)
 
   return widget
 }
 
 function addNumberBadge(parent, number) {
   const badge = parent.addStack()
-  badge.size = new Size(24, 24)
+  badge.size = new Size(20, 20)
   badge.cornerRadius = 6
   badge.backgroundColor = CONFIG.colors.badgeBackground
   badge.centerAlignContent()
@@ -95,7 +95,7 @@ function addStoryRow(widget, story, index) {
   const row = widget.addStack()
   row.layoutHorizontally()
   row.centerAlignContent()
-  row.setPadding(6, 0, 6, 0)
+  row.setPadding(3, 0, 3, 0)
   row.url = story.url || CONFIG.api.comments(story.id)
 
   addNumberBadge(row, index + 1)
@@ -109,16 +109,16 @@ function addStoryRow(widget, story, index) {
   title.textColor = Color.white()
   title.lineLimit = 1
 
-  content.addSpacer(3)
+  content.addSpacer(2)
   addMetaRow(content, story)
 }
 
 function addDivider(widget) {
-  widget.addSpacer(6)
+  widget.addSpacer(2)
   const line = widget.addStack()
   line.size = new Size(0, 1)
   line.backgroundColor = CONFIG.colors.divider
-  widget.addSpacer(6)
+  widget.addSpacer(2)
 }
 
 function addErrorMessage(widget, error) {
@@ -133,7 +133,7 @@ function populateWidget(widget, stories) {
     if (index < stories.length - 1) {
       addDivider(widget)
     } else {
-      widget.addSpacer(6)
+      widget.addSpacer(3)
     }
   })
 }
