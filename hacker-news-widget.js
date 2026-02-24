@@ -140,20 +140,22 @@ function populateWidget(widget, stories) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-const widget = buildWidget()
+;(async () => {
+  const widget = buildWidget()
 
-try {
-  const stories = await fetchTopStories()
-  populateWidget(widget, stories)
-} catch (e) {
-  console.error(e)
-  addErrorMessage(widget, e)
-}
+  try {
+    const stories = await fetchTopStories()
+    populateWidget(widget, stories)
+  } catch (e) {
+    console.error(e)
+    addErrorMessage(widget, e)
+  }
 
-if (config.runsInWidget) {
-  Script.setWidget(widget)
-} else {
-  widget.presentLarge()
-}
+  if (config.runsInWidget) {
+    Script.setWidget(widget)
+  } else {
+    widget.presentLarge()
+  }
 
-Script.complete()
+  Script.complete()
+})()
