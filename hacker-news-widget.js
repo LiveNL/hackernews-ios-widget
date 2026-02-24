@@ -95,7 +95,7 @@ function addStoryRow(widget, story, index) {
   const row = widget.addStack()
   row.layoutHorizontally()
   row.centerAlignContent()
-  row.setPadding(3, 0, 3, 0)
+  row.setPadding(4, 0, 4, 0)
   row.url = story.url || CONFIG.api.comments(story.id)
 
   addNumberBadge(row, index + 1)
@@ -114,11 +114,11 @@ function addStoryRow(widget, story, index) {
 }
 
 function addDivider(widget) {
-  widget.addSpacer(2)
+  widget.addSpacer(3)
   const line = widget.addStack()
   line.size = new Size(0, 1)
   line.backgroundColor = CONFIG.colors.divider
-  widget.addSpacer(2)
+  widget.addSpacer(3)
 }
 
 function addErrorMessage(widget, error) {
