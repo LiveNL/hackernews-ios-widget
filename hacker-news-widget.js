@@ -2,6 +2,8 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
+const VERSION = "2026-02-24 20:45"
+
 const CONFIG = {
   storyCount: 8,
   api: {
@@ -141,6 +143,8 @@ function populateWidget(widget, stories) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 ;(async () => {
+  console.log(`[HN Widget] version: ${VERSION}`)
+
   const widget = buildWidget()
 
   try {
