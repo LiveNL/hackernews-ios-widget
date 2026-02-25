@@ -1,11 +1,11 @@
-// Hacker News Top 8 Widget - Full Width Cards
+// Hacker News Top 10 Widget - Full Width Cards
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-02-24 20:45"
+const VERSION = "2026-02-25 09:00"
 
 const CONFIG = {
-  storyCount: 8,
+  storyCount: 10,
   api: {
     topStories: "https://hacker-news.firebaseio.com/v0/topstories.json",
     item: (id) => `https://hacker-news.firebaseio.com/v0/item/${id}.json`,
@@ -91,6 +91,8 @@ function addMetaRow(parent, story) {
     const hoursAgo = Math.floor((Date.now() / 1000 - story.time) / 3600)
     addLabel(`${hoursAgo}h ago`, CONFIG.colors.meta)
   }
+
+  return meta
 }
 
 function addStoryRow(widget, story, index) {
@@ -98,7 +100,6 @@ function addStoryRow(widget, story, index) {
   row.layoutHorizontally()
   row.centerAlignContent()
   row.setPadding(4, 0, 4, 0)
-  row.url = story.url || CONFIG.api.comments(story.id)
 
   addNumberBadge(row, index + 1)
   row.addSpacer(10)
@@ -106,13 +107,19 @@ function addStoryRow(widget, story, index) {
   const content = row.addStack()
   content.layoutVertically()
 
-  const title = content.addText(story.title)
+  // Tap title → article (falls back to comments for Ask HN / Show HN posts)
+  const titleStack = content.addStack()
+  titleStack.url = story.url || CONFIG.api.comments(story.id)
+  const title = titleStack.addText(story.title)
   title.font = Font.semiboldSystemFont(10)
   title.textColor = Color.white()
   title.lineLimit = 1
 
   content.addSpacer(2)
-  addMetaRow(content, story)
+
+  // Tap meta row → HN comments
+  const metaRow = addMetaRow(content, story)
+  metaRow.url = CONFIG.api.comments(story.id)
 }
 
 function addDivider(widget) {
