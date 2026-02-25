@@ -2,7 +2,7 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-02-25 09:00"
+const VERSION = "2026-02-25 09:15"
 
 const CONFIG = {
   storyCount: 10,
@@ -44,7 +44,7 @@ function buildWidget() {
   gradient.locations = [0, 1]
   gradient.colors = [CONFIG.colors.backgroundTop, CONFIG.colors.backgroundBottom]
   widget.backgroundGradient = gradient
-  widget.setPadding(10, 12, 10, 12)
+  widget.setPadding(6, 12, 6, 12)
 
   return widget
 }
@@ -99,7 +99,7 @@ function addStoryRow(widget, story, index) {
   const row = widget.addStack()
   row.layoutHorizontally()
   row.centerAlignContent()
-  row.setPadding(4, 0, 4, 0)
+  row.setPadding(2, 0, 2, 0)
 
   addNumberBadge(row, index + 1)
   row.addSpacer(10)
@@ -115,7 +115,7 @@ function addStoryRow(widget, story, index) {
   title.textColor = Color.white()
   title.lineLimit = 1
 
-  content.addSpacer(2)
+  content.addSpacer(1)
 
   // Tap meta row → HN comments
   const metaRow = addMetaRow(content, story)
@@ -123,11 +123,11 @@ function addStoryRow(widget, story, index) {
 }
 
 function addDivider(widget) {
-  widget.addSpacer(3)
+  widget.addSpacer(2)
   const line = widget.addStack()
   line.size = new Size(0, 1)
   line.backgroundColor = CONFIG.colors.divider
-  widget.addSpacer(3)
+  widget.addSpacer(2)
 }
 
 function addErrorMessage(widget, error) {
