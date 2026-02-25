@@ -2,7 +2,7 @@
 
 A [Scriptable](https://scriptable.app) widget that shows the top 10 Hacker News stories on your iPhone home screen, with live data straight from the official HN API.
 
-<img width="603" height="1311" alt="Widget preview" src="https://github.com/user-attachments/assets/f5e1f3ed-fb2e-44d3-b5e8-dfdbf04d831e" />
+<img width="301" height="655" alt="Widget preview" src="https://github.com/user-attachments/assets/f5e1f3ed-fb2e-44d3-b5e8-dfdbf04d831e" />
 
 
 ---
