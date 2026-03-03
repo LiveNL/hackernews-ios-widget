@@ -2,7 +2,7 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-03-03 22:56"
+const VERSION = "2026-03-03 23:10"
 
 const CONFIG = {
   storyCount: 10,
@@ -25,12 +25,16 @@ const CONFIG = {
 }
 
 // ─── Read state ───────────────────────────────────────────────────────────────
+// FileManager.local() is accessible from both the widget extension and the main
+// app context; Keychain is not reliably readable from the widget extension.
 
-const KEYCHAIN_KEY = "hn-widget-read"
+const fm = FileManager.local()
+const READ_FILE = fm.joinPath(fm.documentsDirectory(), "hn-widget-read.json")
 
 function getReadIds() {
   try {
-    return JSON.parse(Keychain.get(KEYCHAIN_KEY) || "[]")
+    if (!fm.fileExists(READ_FILE)) return []
+    return JSON.parse(fm.readString(READ_FILE) || "[]")
   } catch {
     return []
   }
@@ -41,7 +45,7 @@ function markAsRead(id) {
   const key = String(id)
   if (!ids.includes(key)) {
     ids.unshift(key)
-    Keychain.set(KEYCHAIN_KEY, JSON.stringify(ids.slice(0, 100)))
+    fm.writeString(READ_FILE, JSON.stringify(ids.slice(0, 100)))
   }
 }
 
@@ -192,11 +196,14 @@ function populateWidget(widget, stories, readIds) {
 ;(async () => {
   console.log(`[HN Widget] version: ${VERSION}`)
 
-  // Handle tap: mark story as read and open the target URL
+  // Handle tap: mark story as read and open the target URL.
+  // The 400 ms delay lets App.openURL() hand off to the browser before
+  // Script.complete() tears down the Scriptable process.
   const params = args.queryParameters
   if (params.target) {
     markAsRead(params.id)
     App.openURL(decodeURIComponent(params.target))
+    await new Promise((resolve) => Timer.schedule(0.4, false, resolve))
     Script.complete()
     return
   }
