@@ -2,7 +2,7 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-03-03 22:40"
+const VERSION = "2026-03-03 22:48"
 
 const CONFIG = {
   storyCount: 10,
@@ -19,7 +19,38 @@ const CONFIG = {
     separator: new Color("#666688"),
     meta: new Color("#aaaacc"),
     divider: new Color("#ffffff", 0.1),
+    titleRead: new Color("#888899"),
+    accentRead: new Color("#776655"),
   },
+}
+
+// ─── Read state ───────────────────────────────────────────────────────────────
+
+const KEYCHAIN_KEY = "hn-widget-read"
+
+function getReadIds() {
+  try {
+    return JSON.parse(Keychain.get(KEYCHAIN_KEY) || "[]")
+  } catch {
+    return []
+  }
+}
+
+function markAsRead(id) {
+  const ids = getReadIds()
+  const key = String(id)
+  if (!ids.includes(key)) {
+    ids.unshift(key)
+    Keychain.set(KEYCHAIN_KEY, JSON.stringify(ids.slice(0, 100)))
+  }
+}
+
+// ─── URL helpers ──────────────────────────────────────────────────────────────
+
+function tapUrl(storyId, targetUrl) {
+  const name = encodeURIComponent(Script.name())
+  const target = encodeURIComponent(targetUrl)
+  return `scriptable:///run/${name}?id=${storyId}&target=${target}`
 }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
@@ -95,7 +126,9 @@ function addMetaRow(parent, story) {
   return meta
 }
 
-function addStoryRow(widget, story, index) {
+function addStoryRow(widget, story, index, readIds) {
+  const isRead = readIds.includes(String(story.id))
+
   const row = widget.addStack()
   row.layoutHorizontally()
   row.centerAlignContent()
@@ -109,10 +142,10 @@ function addStoryRow(widget, story, index) {
 
   // Tap title → article (falls back to comments for Ask HN / Show HN posts)
   const titleStack = content.addStack()
-  titleStack.url = story.url || CONFIG.api.comments(story.id)
+  titleStack.url = tapUrl(story.id, story.url || CONFIG.api.comments(story.id))
   const title = titleStack.addText(story.title)
-  title.font = Font.semiboldSystemFont(10)
-  title.textColor = Color.white()
+  title.font = isRead ? Font.systemFont(10) : Font.semiboldSystemFont(10)
+  title.textColor = isRead ? CONFIG.colors.titleRead : Color.white()
   title.lineLimit = 1
 
   content.addSpacer(1)
@@ -122,13 +155,13 @@ function addStoryRow(widget, story, index) {
 
   // Dedicated HN button → comments
   const hnBtn = row.addStack()
-  hnBtn.url = CONFIG.api.comments(story.id)
+  hnBtn.url = tapUrl(story.id, CONFIG.api.comments(story.id))
   hnBtn.setPadding(5, 9, 5, 9)
   hnBtn.cornerRadius = 7
-  hnBtn.backgroundColor = new Color("#ff6600", 0.25)
+  hnBtn.backgroundColor = new Color("#ff6600", isRead ? 0.1 : 0.25)
   const hnText = hnBtn.addText("HN")
   hnText.font = Font.boldSystemFont(9)
-  hnText.textColor = CONFIG.colors.accent
+  hnText.textColor = isRead ? CONFIG.colors.accentRead : CONFIG.colors.accent
 }
 
 function addDivider(widget) {
@@ -145,9 +178,9 @@ function addErrorMessage(widget, error) {
   text.textColor = Color.white()
 }
 
-function populateWidget(widget, stories) {
+function populateWidget(widget, stories, readIds) {
   stories.forEach((story, index) => {
-    addStoryRow(widget, story, index)
+    addStoryRow(widget, story, index, readIds)
     if (index < stories.length - 1) {
       addDivider(widget)
     }
@@ -159,11 +192,21 @@ function populateWidget(widget, stories) {
 ;(async () => {
   console.log(`[HN Widget] version: ${VERSION}`)
 
+  // Handle tap: mark story as read and open the target URL
+  const params = args.queryParameters
+  if (params.target) {
+    markAsRead(params.id)
+    Safari.open(decodeURIComponent(params.target))
+    Script.complete()
+    return
+  }
+
+  const readIds = getReadIds()
   const widget = buildWidget()
 
   try {
     const stories = await fetchTopStories()
-    populateWidget(widget, stories)
+    populateWidget(widget, stories, readIds)
   } catch (e) {
     console.error(e)
     addErrorMessage(widget, e)
