@@ -2,7 +2,7 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-03-03 23:10"
+const VERSION = "2026-03-03 23:30"
 
 const CONFIG = {
   storyCount: 10,
@@ -196,14 +196,14 @@ function populateWidget(widget, stories, readIds) {
 ;(async () => {
   console.log(`[HN Widget] version: ${VERSION}`)
 
-  // Handle tap: mark story as read and open the target URL.
-  // The 400 ms delay lets App.openURL() hand off to the browser before
-  // Script.complete() tears down the Scriptable process.
+  // Handle tap: mark story as read, then open the article.
+  // App.openURL / Safari.open are blocked by iOS when the app is launched via
+  // URL scheme from a widget — the sandbox prevents switching to another app.
+  // Safari.openInApp() works because it opens a browser *within* Scriptable.
   const params = args.queryParameters
   if (params.target) {
     markAsRead(params.id)
-    App.openURL(decodeURIComponent(params.target))
-    await new Promise((resolve) => Timer.schedule(0.4, false, resolve))
+    await Safari.openInApp(decodeURIComponent(params.target), true)
     Script.complete()
     return
   }
