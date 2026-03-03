@@ -2,7 +2,7 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-02-25 09:15"
+const VERSION = "2026-03-03 12:00"
 
 const CONFIG = {
   storyCount: 10,
@@ -99,7 +99,7 @@ function addStoryRow(widget, story, index) {
   const row = widget.addStack()
   row.layoutHorizontally()
   row.centerAlignContent()
-  row.setPadding(2, 0, 2, 0)
+  row.setPadding(4, 0, 4, 0)
 
   addNumberBadge(row, index + 1)
   row.addSpacer(10)
@@ -116,10 +116,19 @@ function addStoryRow(widget, story, index) {
   title.lineLimit = 1
 
   content.addSpacer(1)
+  addMetaRow(content, story)
 
-  // Tap meta row → HN comments
-  const metaRow = addMetaRow(content, story)
-  metaRow.url = CONFIG.api.comments(story.id)
+  row.addSpacer()
+
+  // Dedicated HN button → comments
+  const hnBtn = row.addStack()
+  hnBtn.url = CONFIG.api.comments(story.id)
+  hnBtn.setPadding(4, 7, 4, 7)
+  hnBtn.cornerRadius = 6
+  hnBtn.backgroundColor = new Color("#ff6600", 0.25)
+  const hnText = hnBtn.addText("HN")
+  hnText.font = Font.boldSystemFont(9)
+  hnText.textColor = CONFIG.colors.accent
 }
 
 function addDivider(widget) {
