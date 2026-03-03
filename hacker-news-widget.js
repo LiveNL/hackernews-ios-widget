@@ -2,7 +2,7 @@
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
-const VERSION = "2026-03-03 12:00"
+const VERSION = "2026-03-03 13:00"
 
 const CONFIG = {
   storyCount: 10,
@@ -44,7 +44,7 @@ function buildWidget() {
   gradient.locations = [0, 1]
   gradient.colors = [CONFIG.colors.backgroundTop, CONFIG.colors.backgroundBottom]
   widget.backgroundGradient = gradient
-  widget.setPadding(6, 12, 6, 12)
+  widget.setPadding(10, 14, 10, 14)
 
   return widget
 }
@@ -99,7 +99,7 @@ function addStoryRow(widget, story, index) {
   const row = widget.addStack()
   row.layoutHorizontally()
   row.centerAlignContent()
-  row.setPadding(4, 0, 4, 0)
+  row.setPadding(2, 0, 2, 0)
 
   addNumberBadge(row, index + 1)
   row.addSpacer(10)
@@ -123,8 +123,8 @@ function addStoryRow(widget, story, index) {
   // Dedicated HN button → comments
   const hnBtn = row.addStack()
   hnBtn.url = CONFIG.api.comments(story.id)
-  hnBtn.setPadding(4, 7, 4, 7)
-  hnBtn.cornerRadius = 6
+  hnBtn.setPadding(5, 9, 5, 9)
+  hnBtn.cornerRadius = 7
   hnBtn.backgroundColor = new Color("#ff6600", 0.25)
   const hnText = hnBtn.addText("HN")
   hnText.font = Font.boldSystemFont(9)
@@ -150,8 +150,6 @@ function populateWidget(widget, stories) {
     addStoryRow(widget, story, index)
     if (index < stories.length - 1) {
       addDivider(widget)
-    } else {
-      widget.addSpacer(3)
     }
   })
 }
